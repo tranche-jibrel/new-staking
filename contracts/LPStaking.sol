@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract StakingRewards {
+contract LPStaking {
     IERC20 public rewardsToken;
     IERC20 public stakingToken;
 

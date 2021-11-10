@@ -10,6 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2"
+    "@openzeppelin/contracts": "^4.3.2",
+    "eth-gas-reporter": "0.2.18"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15"
   }
 }
