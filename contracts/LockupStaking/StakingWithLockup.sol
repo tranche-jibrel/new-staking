@@ -13,7 +13,7 @@ contract StakingWithLockup is Ownable {
     uint public maxCapacity; // max tokens that can be deposited
     uint public stakeDuration; // staking duration in sec
     
-    uint public totalDeposits; 
+    uint public totalDeposits;
 
     struct StakingDetails {
         uint256 startTime;
@@ -35,26 +35,26 @@ contract StakingWithLockup is Ownable {
         rewardRate = _rewardRate;
     }
 
-    function updateRewardRate(uint newRewardRate) 
-    onlyOwner external 
+    function updateRewardRate(uint newRewardRate)
+    external onlyOwner
     {
         rewardRate = newRewardRate;
     }
 
-    function updateMaxCapacity(uint newMaxCapacity) 
-    onlyOwner external 
+    function updateMaxCapacity(uint newMaxCapacity)
+    external onlyOwner
     {
         maxCapacity = newMaxCapacity;
     }
 
-    function viewStake(address user, uint counter) 
+    function viewStake(address user, uint counter)
     external view returns(StakingDetails memory)
     {
         return stakingDetails[user][counter];
     }
 
-    function stake(uint _amount) 
-    external 
+    function stake(uint _amount)
+    external
     {
         // check max capacity
         totalDeposits += _amount;
@@ -62,13 +62,17 @@ contract StakingWithLockup is Ownable {
 
         stakingToken.transferFrom(msg.sender, address(this), _amount);
 
-        StakingDetails storage _stake = stakingDetails[msg.sender][stakeCounter[msg.sender] + 1];
+        // increment stake counter for user
+        stakeCounter[msg.sender] += 1;
+
+        // update staking details
+        StakingDetails storage _stake = stakingDetails[msg.sender][stakeCounter[msg.sender]];
         _stake.startTime = block.timestamp;
         _stake.amount = _amount;
     }
 
-    function withdraw(uint _counter) 
-    external 
+    function withdraw(uint _counter)
+    external
     {
         StakingDetails memory _stake = stakingDetails[msg.sender][_counter];
 
