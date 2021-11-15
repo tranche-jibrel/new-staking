@@ -1,12 +1,11 @@
 const LockupFactory = artifacts.require('LockupFactory');
 const Token = artifacts.require('Token');
-const LPStaking = artifacts.require('LPStaking');
 const StakingWithLockup = artifacts.require('StakingWithLockup');
 
 const { time, expectRevert } = require("@openzeppelin/test-helpers");
 
 contract("StakingWithLockup", accounts => {
-    let token, factory, lpStaking;
+    let token, factory;
     let initialBalance, pool1;
 
     let owner = accounts[0];
@@ -15,7 +14,6 @@ contract("StakingWithLockup", accounts => {
     before(async() => {
         token = await Token.deployed();
         factory = await LockupFactory.deployed();
-        lpStaking = await LPStaking.deployed();
     })
 
     it("check token", async () => {

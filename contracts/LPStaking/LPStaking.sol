@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -7,7 +7,7 @@ contract LPStaking {
     IERC20 public rewardsToken;
     IERC20 public stakingToken;
 
-    uint public rewardRate = 100;
+    uint public rewardRate;
     uint public lastUpdateTime;
     uint public rewardPerTokenStored;
 
@@ -17,9 +17,10 @@ contract LPStaking {
     uint private _totalSupply;
     mapping(address => uint) private _balances;
 
-    constructor(address _stakingToken, address _rewardsToken) {
+    constructor(address _stakingToken, address _rewardsToken, uint _rewardRate) {
         stakingToken = IERC20(_stakingToken);
         rewardsToken = IERC20(_rewardsToken);
+        rewardRate = _rewardRate;
     }
 
     function rewardPerToken() public view returns (uint) {
