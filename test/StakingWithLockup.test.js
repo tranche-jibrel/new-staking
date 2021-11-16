@@ -81,7 +81,7 @@ contract("StakingWithLockup", accounts => {
 
         it('should throw error while updating reward rate from testUser1', async() => {            
             newRewardRate = 20;
-            expectRevert(pool1.updateRewardRate(newRewardRate, {from: testUser1}), "Caller not owner");
+            expectRevert(pool1.updateRewardRate(newRewardRate, {from: testUser1}), "Ownable: caller is not the owner");
 
             expect((await pool1.rewardRate()).toString()).to.not.equal(newRewardRate.toString());
         })
@@ -103,7 +103,7 @@ contract("StakingWithLockup", accounts => {
 
         it('should throw error while updating reward rate from testUser1', async() => {            
             newMaxCapacity = web3.utils.toWei('3000');
-            expectRevert(pool1.updateMaxCapacity(newMaxCapacity, {from: testUser1}), "Caller not owner");
+            expectRevert(pool1.updateMaxCapacity(newMaxCapacity, {from: testUser1}), "Ownable: caller is not the owner");
 
             expect((await pool1.maxCapacity()).toString()).to.not.equal(newMaxCapacity.toString());
         })
@@ -119,7 +119,7 @@ contract("StakingWithLockup", accounts => {
             await token.transfer(testUser1, web3.utils.toWei('10'), {from: owner});
         })
 
-        it('stake 10 tokens', async () => {
+        it('should create 5 stakes', async () => {
             initialBalance = await token.balanceOf(testUser1);
 
             // approve 10 tokens
@@ -224,6 +224,8 @@ contract("StakingWithLockup", accounts => {
             expect(pool2).to.not.equal(0x0000000000000000000000000000000000000000);
 
             pool2 = await StakingWithLockup.at(pool2);
+
+            await token.transfer(testUser2, web3.utils.toWei('100'), { from : owner });
         })
     
         it('fund staking pool', async () => {
@@ -235,27 +237,32 @@ contract("StakingWithLockup", accounts => {
         })
 
         it('stake 100 tokens', async () => {
-            initialBalance = await token.balanceOf(owner);
+            initialBalance = await token.balanceOf(testUser2);
 
             // approve 100 tokens
-            await token.approve(pool2.address, web3.utils.toWei('100'));
-            expect((await token.allowance(owner, pool2.address)).toString()).to.equal(web3.utils.toWei('100'));
+            await token.approve(pool2.address, web3.utils.toWei('100'), {from: testUser2});
+            expect((await token.allowance(testUser2, pool2.address, {from: testUser2})).toString()).to.equal(web3.utils.toWei('100'));
 
-            await pool2.stake(web3.utils.toWei('100'), {from: owner});
+            console.log('Gas for staking 1st time', (await pool2.stake.estimateGas(web3.utils.toWei('50'), {from: testUser2})))
+            await pool2.stake(web3.utils.toWei('50'), {from: testUser2});
 
-            expect(parseInt(await token.balanceOf(owner)))
+            console.log('Gas for staking 2nd time', (await pool2.stake.estimateGas(web3.utils.toWei('50'), {from: testUser2})))
+            await pool2.stake(web3.utils.toWei('50'), {from: testUser2});
+
+            expect(parseInt(await token.balanceOf(testUser2)))
             .to.equal(initialBalance - 100*(10**18))
         })
 
-        it('withdraw tokens', async () => {
+        it('withdraw all stakes', async () => {
             await time.increase(time.duration.days(60));
-
-            expect(parseInt(await token.balanceOf(owner)))
+            
+            expect(parseInt(await token.balanceOf(testUser2)))
             .to.equal(initialBalance - 100*(10**18))
 
-            await pool2.withdraw(0, {from: owner});
+            console.log('Gas for withdraw all', (await pool2.withdrawAll.estimateGas({from: testUser2})))
+            await pool2.withdrawAll({from: testUser2});
 
-            expect(parseInt(await token.balanceOf(owner))).to.equal(parseInt(initialBalance) + 100*(10**18)*(rewardRate/100))
+            expect(parseInt(await token.balanceOf(testUser2))).to.equal(parseInt(initialBalance) + 100*(10**18)*(rewardRate/100))
         })
     });
 })

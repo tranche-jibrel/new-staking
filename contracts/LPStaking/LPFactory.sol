@@ -12,7 +12,7 @@ contract LPFactory is Ownable {
         rewardToken = _rewardToken;
     }
 
-    LPStaking[] public stakingPools;
+    address[] public stakingPools;
 
     function newStakingPool(
         address _stakingToken,
@@ -21,6 +21,8 @@ contract LPFactory is Ownable {
     onlyOwner external
     {
         LPStaking pool = new LPStaking(_stakingToken, rewardToken, _rewardRate);
-        stakingPools.push(pool);
+        pool.transferOwnership(owner());
+        
+        stakingPools.push(address(pool));
     }
 }

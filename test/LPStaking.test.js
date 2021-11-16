@@ -17,5 +17,7 @@ contract("LPStaking", accounts => {
         factory = await LPFactory.deployed();
     })
     
-    
+    describe('new lp staking pool - 1', async () => {
+
+    })
 })
