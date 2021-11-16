@@ -65,7 +65,6 @@ contract Token is ERC20, Pausable, Ownable, Blacklist {
     );
 
     constructor(string memory _name, string memory _symbol, uint256 _initialSupply, uint256 mintingAllowedAfter_)
-        public
         ERC20(_name, _symbol)
     {
         _mint(msg.sender, _initialSupply.mul(10**18));

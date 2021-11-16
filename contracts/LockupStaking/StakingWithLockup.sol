@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract StakingWithLockup is Ownable {
+contract StakingWithLockup {
     using SafeMath for uint256;
     IERC20 public stakingToken;
 
@@ -23,6 +22,8 @@ contract StakingWithLockup is Ownable {
     mapping (address => uint256) public stakeCounter;
     mapping (address => mapping (uint256 => StakingDetails)) public stakingDetails;
 
+    address public owner;
+
     constructor(
         address _stakingToken,
         uint256 _stakeDuration,
@@ -33,6 +34,14 @@ contract StakingWithLockup is Ownable {
         stakeDuration = _stakeDuration;
         maxCapacity = _maxCapacity;
         rewardRate = _rewardRate;
+
+        // set [account that sent tx] as owner
+        owner = tx.origin;
+    }
+
+    modifier onlyOwner(){
+        require(msg.sender == owner, "Caller not owner");
+        _;
     }
 
     function updateRewardRate(uint newRewardRate)
@@ -57,34 +66,29 @@ contract StakingWithLockup is Ownable {
     external
     {
         // check max capacity
-        totalDeposits += _amount;
+        totalDeposits = totalDeposits.add(_amount);
         require(totalDeposits < maxCapacity, "Total deposits limit reached");
 
         stakingToken.transferFrom(msg.sender, address(this), _amount);
-
-        // increment stake counter for user
-        stakeCounter[msg.sender] += 1;
 
         // update staking details
         StakingDetails storage _stake = stakingDetails[msg.sender][stakeCounter[msg.sender]];
         _stake.startTime = block.timestamp;
         _stake.amount = _amount;
+
+        // increment stake counter for user
+        stakeCounter[msg.sender] = stakeCounter[msg.sender].add(1);
     }
 
     function withdraw(uint _counter)
     external
     {
         StakingDetails memory _stake = stakingDetails[msg.sender][_counter];
+        // check if lockup period is over for _stake
+        require((int(stakeDuration) - int(block.timestamp.sub(_stake.startTime))) <= 0, "Lockup Period not over");
 
-        // if stakeDuration is NOT satisfied
-        if((int(stakeDuration) - int(block.timestamp - _stake.startTime)) > 0){
-            // premature withdrawal
-            stakingToken.transfer(msg.sender, _stake.amount);
-            totalDeposits -= _stake.amount;
-            return;
-        }
-
-        stakingToken.transfer(msg.sender, _stake.amount*(100 + rewardRate) / 100);
+        // if staking period is over -> reward = stakeAmount + stakeAmount*rewardRate/100
+        stakingToken.transfer(msg.sender, _stake.amount.mul(rewardRate.add(100)).div(100));
         
         delete stakingDetails[msg.sender][_counter];
     }
