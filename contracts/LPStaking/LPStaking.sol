@@ -31,6 +31,8 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
         rewardRate = _rewardRate;
     }
 
+    /* =========== VIEW FUNCTIONS =========== */
+
     function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
@@ -53,7 +55,7 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
         return _balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
-    /* ========== MUTATIVE FUNCTIONS ========== */
+    /* =========== MUTATIVE FUNCTIONS =========== */
 
     function stake(uint _amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
         _totalSupply = _totalSupply.add(_amount);
