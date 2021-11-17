@@ -50,9 +50,12 @@ contract("LPStaking", accounts => {
 
         it('user1 should be able to stake 50+50 tokens', async () => {
 
-            await lp_token.approve(pool1.address, web3.utils.toWei('100'), {from: testUser1});
+            await lp_token.approve(pool1.address, web3.utils.toWei('1000'), {from: testUser1});
 
+            console.log("Gas for LP staking 1st time: ", (await pool1.stake.estimateGas(web3.utils.toWei('50'), {from: testUser1})))
             await pool1.stake(web3.utils.toWei('50'), {from: testUser1});
+
+            console.log("Gas for LP staking 2st time: ", (await pool1.stake.estimateGas(web3.utils.toWei('50'), {from: testUser1})))
             await pool1.stake(web3.utils.toWei('50'), {from: testUser1});
 
             expect((await pool1.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('100'));
@@ -65,6 +68,7 @@ contract("LPStaking", accounts => {
 
             await time.increase(1000);
 
+            console.log("Gas for exit stake: ", (await pool1.exit.estimateGas({from: testUser1})))
             await pool1.exit({from: testUser1});
 
             expect((await pool1.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('0'));
@@ -92,6 +96,8 @@ contract("LPStaking", accounts => {
         it('user2 should get reward at 80tokens/sec', async() => {
 
             await time.increase(1000);
+
+            console.log("Gas for withdraw: ", (await pool1.withdraw.estimateGas((await pool1.balanceOf(testUser2)), {from: testUser2})))
 
             // await pool1.exit({from: testUser2});
             await pool1.withdraw((await pool1.balanceOf(testUser2)), {from: testUser2});
