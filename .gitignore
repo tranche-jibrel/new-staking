@@ -1,4 +1,11 @@
-node_modules
-build
+.gitmodules
+node_modules/*
 .env
+build/
+unused/
+dist/*
 package-lock.json
+flatten/*
+coverage.json
+coverage/
+*.txt

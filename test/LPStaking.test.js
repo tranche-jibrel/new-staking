@@ -29,7 +29,7 @@ contract("LPStaking", accounts => {
         let balance = await token.balanceOf(owner);
 
         expect(balance.toString()).to.equal(
-            web3.utils.toWei('1000000000000000000000000000'));
+            web3.utils.toWei('20000000'));
     })
     
     it('new lp staking pool - 1', async () => {
