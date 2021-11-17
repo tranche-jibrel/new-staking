@@ -2,52 +2,34 @@
 pragma solidity ^0.8.0;
 
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-// Inheritance
 import { ILPStaking } from "./interfaces/ILPStaking.sol";
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
-
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract LPStaking is ILPStaking, ReentrancyGuard, Pausable, Ownable {
+contract LPStaking is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES ========== */
-
-    IERC20 public rewardsToken; 
+    IERC20 public rewardsToken;
     IERC20 public stakingToken;
-    uint256 public periodFinish = 0;
-    uint256 public rewardRate = 0;
-    uint256 public rewardsDuration = 7 days;
-    uint256 public lastUpdateTime;
-    uint256 public rewardPerTokenStored;
 
-    mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public rewards;
+    uint public rewardRate;
+    uint public lastUpdateTime;
+    uint public rewardPerTokenStored;
 
-    uint256 private _totalSupply;
-    mapping(address => uint256) private _balances;
+    mapping(address => uint) public userRewardPerTokenPaid;
+    mapping(address => uint) public rewards;
 
-    address public rewardsDistribution;
+    uint private _totalSupply;
+    mapping(address => uint) private _balances;
 
-    /* ========== CONSTRUCTOR ========== */
-
-    constructor(
-        address _rewardsDistribution,
-        address _rewardsToken,
-        address _stakingToken
-    ){
-        rewardsToken = IERC20(_rewardsToken);
+    constructor(address _stakingToken, address _rewardsToken, uint _rewardRate) {
         stakingToken = IERC20(_stakingToken);
-        rewardsDistribution = _rewardsDistribution;
+        rewardsToken = IERC20(_rewardsToken);
+        rewardRate = _rewardRate;
     }
-    
-
-    /* ========== VIEWS ========== */
 
     function totalSupply() external view returns (uint256) {
         return _totalSupply;
@@ -57,53 +39,38 @@ contract LPStaking is ILPStaking, ReentrancyGuard, Pausable, Ownable {
         return _balances[account];
     }
 
-    function lastTimeRewardApplicable() public view returns (uint256) {
-        return block.timestamp < periodFinish ? block.timestamp : periodFinish;
-    }
-
-    function rewardPerToken() public view returns (uint256) {
+    function rewardPerToken() public view returns (uint) {
         if (_totalSupply == 0) {
             return rewardPerTokenStored;
         }
         return
             rewardPerTokenStored.add(
-                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
+                (block.timestamp).sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
             );
     }
 
-    function earned(address account) public view returns (uint256) {
+    function earned(address account) public view returns (uint) {
         return _balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
-    }
-
-    function getRewardForDuration() external view returns (uint256) {
-        return rewardRate.mul(rewardsDuration);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
+    function stake(uint _amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
+        _totalSupply = _totalSupply.add(_amount);
+        _balances[msg.sender] = _balances[msg.sender].add(_amount);
+        stakingToken.transferFrom(msg.sender, address(this), _amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
-        emit Withdrawn(msg.sender, amount);
+    function withdraw(uint _amount) public nonReentrant whenNotPaused updateReward(msg.sender) {
+        _totalSupply = _totalSupply.sub(_amount);
+        _balances[msg.sender] = _balances[msg.sender].sub(_amount);
+        stakingToken.transfer(msg.sender, _amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
-        uint256 reward = rewards[msg.sender];
-        if (reward > 0) {
-            rewards[msg.sender] = 0;
-            rewardsToken.safeTransfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
-        }
+    function getReward() public nonReentrant whenNotPaused updateReward(msg.sender) {
+        uint reward = rewards[msg.sender];
+        rewards[msg.sender] = 0;
+        rewardsToken.transfer(msg.sender, reward);
     }
 
     function exit() external {
@@ -111,63 +78,18 @@ contract LPStaking is ILPStaking, ReentrancyGuard, Pausable, Ownable {
         getReward();
     }
 
-    /* ========== RESTRICTED FUNCTIONS ========== */
-
-    function setRewardsDistribution(address _rewardsDistribution) external onlyOwner {
-        rewardsDistribution = _rewardsDistribution;
-    }
-
-    function notifyRewardAmount(uint256 reward) external onlyRewardsDistribution updateReward(address(0)) {
-        if (block.timestamp >= periodFinish) {
-            rewardRate = reward.div(rewardsDuration);
-        } else {
-            uint256 remaining = periodFinish.sub(block.timestamp);
-            uint256 leftover = remaining.mul(rewardRate);
-            rewardRate = reward.add(leftover).div(rewardsDuration);
-        }
-
-        // Ensure the provided reward amount is not more than the balance in the contract.
-        // This keeps the reward rate in the right range, preventing overflows due to
-        // very high values of rewardRate in the earned and rewardsPerToken functions;
-        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint balance = rewardsToken.balanceOf(address(this));
-        require(rewardRate <= balance.div(rewardsDuration), "Provided reward too high");
-
-        lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(rewardsDuration);
-        emit RewardAdded(reward);
-    }
-
-    // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
-        require(tokenAddress != address(stakingToken), "Cannot withdraw the staking token");
-        IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
-        emit Recovered(tokenAddress, tokenAmount);
-    }
-
-    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
-        require(
-            block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
-        rewardsDuration = _rewardsDuration;
-        emit RewardsDurationUpdated(rewardsDuration);
+    function updateRewardRate(uint newRewardRate) external onlyOwner {
+        rewardRate = newRewardRate;
     }
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlyRewardsDistribution() {
-        require(msg.sender == rewardsDistribution, "Caller is not RewardsDistribution contract");
-        _;
-    }
-
     modifier updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
+        lastUpdateTime = block.timestamp;
+
+        rewards[account] = earned(account);
+        userRewardPerTokenPaid[account] = rewardPerTokenStored;
         _;
     }
 
