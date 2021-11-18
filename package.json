@@ -2,19 +2,25 @@
   "name": "staking",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "truffle-config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "npx truffle compile --all",
+    "test": "mocha --exit --recursive --timeout 20000"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
-    "dotenv": "^10.0.0",
-    "eth-gas-reporter": "0.2.18"
+    "@truffle/hdwallet-provider": "^1.2.2",
+    "dotenv": "^10.0.0"
   },
   "devDependencies": {
-    "@openzeppelin/test-helpers": "^0.5.15"
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "eth-gas-reporter": "0.2.18",
+    "ganache-time-traveler": "^1.0.15",
+    "solidity-coverage": "^0.7.16",
+    "truffle-contract-size": "^2.0.1",
+    "truffle-plugin-verify": "^0.5.8"
   }
 }

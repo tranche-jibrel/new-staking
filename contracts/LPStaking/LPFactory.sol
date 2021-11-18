@@ -7,19 +7,13 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 contract LPFactory is Ownable {
 
     address public rewardToken;
+    address[] public stakingPools;
 
     constructor(address _rewardToken) {
         rewardToken = _rewardToken;
     }
 
-    address[] public stakingPools;
-
-    function newStakingPool(
-        address _stakingToken,
-        uint _rewardRate
-    )
-    onlyOwner external
-    {
+    function newStakingPool(address _stakingToken, uint _rewardRate) onlyOwner external {
         LPStaking pool = new LPStaking(_stakingToken, rewardToken, _rewardRate);
         pool.transferOwnership(owner());
         

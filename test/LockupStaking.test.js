@@ -1,11 +1,11 @@
 const LockupFactory = artifacts.require('LockupFactory');
 const Token = artifacts.require('Token');
-const StakingWithLockup = artifacts.require('StakingWithLockup');
+const StakingWithLockup = artifacts.require('LockupStaking');
 
 const { time, expectRevert } = require("@openzeppelin/test-helpers");
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 
-contract("StakingWithLockup", accounts => {
+contract("LockupStaking", accounts => {
     let token, factory;
     let initialBalance, pool1, pool2;
     let rewardRate = 10;
@@ -24,7 +24,7 @@ contract("StakingWithLockup", accounts => {
         let balance = await token.balanceOf(owner);
 
         expect(balance.toString()).to.equal(
-            web3.utils.toWei('1000000000000000000000000000'));
+            web3.utils.toWei('20000000'));
     })
 
     it("create new staking lockup", async () => {
@@ -256,8 +256,7 @@ contract("StakingWithLockup", accounts => {
         it('withdraw all stakes', async () => {
             await time.increase(time.duration.days(60));
             
-            expect(parseInt(await token.balanceOf(testUser2)))
-            .to.equal(initialBalance - 100*(10**18))
+            expect(parseInt(await token.balanceOf(testUser2))).to.equal(initialBalance - 100*(10**18))
 
             console.log('Gas for withdraw all', (await pool2.withdrawAll.estimateGas({from: testUser2})))
             await pool2.withdrawAll({from: testUser2});

@@ -7,7 +7,7 @@ const LPFactory = artifacts.require('LPFactory');
 
 module.exports = async function (deployer) {
   // Deploy SLICE token
-  await deployer.deploy(Token, "Slice Test", "SLICE", '1000000000000000000000000000', 0);
+  await deployer.deploy(Token, "Slice Test", "SLICE", '20000000', 0);
   const token = await Token.deployed();
 
   // Staking Lockup Factory contract
