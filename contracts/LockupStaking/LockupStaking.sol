@@ -104,7 +104,7 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
         maxCapacity = newMaxCapacity;
     }
 
-    function setOldStakingToImport(address _migrationAddress) external onlyOwner {
+    function setMigrateStaking(address _migrationAddress) external onlyOwner {
         migrationStakingAddress = _migrationAddress;
     }
 
