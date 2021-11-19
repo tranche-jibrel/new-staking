@@ -1,30 +1,36 @@
 const LockupFactory = artifacts.require('LockupFactory');
 const Token = artifacts.require('Token');
-const StakingWithLockup = artifacts.require('LockupStaking');
+const LockupStaking = artifacts.require('LockupStaking');
 
-const { time, expectRevert } = require("@openzeppelin/test-helpers");
+const { BN, time, expectRevert, constants } = require("@openzeppelin/test-helpers");
+const { ZERO_ADDRESS } = constants;
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 
 contract("LockupStaking", accounts => {
     let token, factory;
     let initialBalance, pool1, pool2;
-    let rewardRate = 10;
+    let rewardRate = web3.utils.toWei("0.1");
     let maxCapacity = web3.utils.toWei('1000');
-
     let owner = accounts[0];
     let testUser1 = accounts[1];
     let testUser2 = accounts[2];
 
-    before(async() => {
+    //before(async() => {
+    it("setups", async () => {
         token = await Token.deployed();
+        expect(token.address).to.be.not.equal(ZERO_ADDRESS);
+        expect(token.address).to.match(/0x[0-9a-fA-F]{40}/);
+
         factory = await LockupFactory.deployed();
+        expect(factory.address).to.be.not.equal(ZERO_ADDRESS);
+        expect(factory.address).to.match(/0x[0-9a-fA-F]{40}/);
     })
 
     it("check token", async () => {
         let balance = await token.balanceOf(owner);
 
         expect(balance.toString()).to.equal(
-            web3.utils.toWei('20000000'));
+            web3.utils.toWei('19990000'));
     })
 
     it("create new staking lockup", async () => {
@@ -35,15 +41,16 @@ contract("LockupStaking", accounts => {
         )
 
         pool1 = await factory.stakingPools(0);
-        expect(pool1).to.not.equal(0x0000000000000000000000000000000000000000);
+        expect(pool1).to.not.equal(ZERO_ADDRESS);
     })
 
     it('fund staking pool', async () => {
-        let totalReward = rewardRate*maxCapacity/100;
+        // web3.utils.toBN((maxCapacity * rewardRate).toString())
+        let totalReward = maxCapacity * rewardRate / (10**18);
+        // console.log(maxCapacity, rewardRate, totalReward)
         await token.transfer(pool1, totalReward.toString(), { from : owner });
 
-        expect((await token.balanceOf(pool1)).toString())
-        .equal(totalReward.toString());
+        expect((await token.balanceOf(pool1)).toString()).equal(totalReward.toString());
     })
 
     describe('modify lockup', () => {
@@ -52,10 +59,10 @@ contract("LockupStaking", accounts => {
 
         before(async () => {
             pool1 = await factory.stakingPools(0);
-            pool1 = await StakingWithLockup.at(pool1);
+            pool1 = await LockupStaking.at(pool1);
 
             rewardRate = await pool1.rewardRate();
-            expect(rewardRate.toString()).to.equal('10');
+            expect(rewardRate.toString()).to.equal(web3.utils.toWei('0.1'));
 
             maxCapacity = await pool1.maxCapacity();
             expect(maxCapacity.toString()).to.equal(web3.utils.toWei('1000'))
@@ -65,14 +72,15 @@ contract("LockupStaking", accounts => {
             let lockupOwner = await pool1.owner();
             expect(lockupOwner).to.equal(owner);
             
-            newRewardRate = 20;
+            // newRewardRate = 20;
+            newRewardRate = web3.utils.toWei("0.2")
             await pool1.updateRewardRate(newRewardRate, {from: owner});
 
             rewardRate = await pool1.rewardRate();
             expect(rewardRate.toString()).to.equal(newRewardRate.toString());
 
-
-            newRewardRate = 10;
+            // newRewardRate = 10;
+            newRewardRate = web3.utils.toWei("0.1")
             await pool1.updateRewardRate(newRewardRate, {from: owner});
 
             rewardRate = await pool1.rewardRate();
@@ -80,7 +88,8 @@ contract("LockupStaking", accounts => {
         })
 
         it('should throw error while updating reward rate from testUser1', async() => {            
-            newRewardRate = 20;
+            // newRewardRate = 20;
+            newRewardRate = web3.utils.toWei("0.2")
             expectRevert(pool1.updateRewardRate(newRewardRate, {from: testUser1}), "Ownable: caller is not the owner");
 
             expect((await pool1.rewardRate()).toString()).to.not.equal(newRewardRate.toString());
@@ -111,7 +120,8 @@ contract("LockupStaking", accounts => {
 
     describe('staking', async () => {
 
-        before(async () => {
+        //before(async () => {
+        it("setups max capacity to pool1", async () => {
             maxCapacity = await pool1.maxCapacity();
             expect(maxCapacity.toString()).to.equal(web3.utils.toWei('1000'))
             
@@ -135,8 +145,7 @@ contract("LockupStaking", accounts => {
 
             expect((await pool1.stakeCounter(testUser1)).toString()).to.equal('5');
 
-            expect(parseInt(await token.balanceOf(testUser1)))
-            .to.equal(initialBalance - 5*(10**18))
+            expect(parseInt(await token.balanceOf(testUser1))).to.equal(initialBalance - 5*(10**18))
         })
 
         it('should throw error staking > maxCapacity tokens', async () => {
@@ -167,14 +176,14 @@ contract("LockupStaking", accounts => {
             await pool1.withdraw(0, {from: testUser1});
             await pool1.withdraw(1, {from: testUser1});
 
-            expect(parseInt(await token.balanceOf(testUser1)))
-            .to.equal(parseInt(initialBalance) + 2*(10**18)*(1 + (rewardRate/100)))
+            expect(parseInt(await token.balanceOf(testUser1))).to.equal(parseInt(initialBalance) + 2*(10**18)*(1 + (rewardRate/(10**18))))
         })
 
         it('should give more reward after updating rate' , async() => {
 
             // update reward rate
-            newRewardRate = 20;
+            // newRewardRate = 20;
+            newRewardRate = web3.utils.toWei("0.2")
             await pool1.updateRewardRate(newRewardRate, {from: owner});
 
             rewardRate = await pool1.rewardRate();
@@ -185,14 +194,14 @@ contract("LockupStaking", accounts => {
 
             await pool1.withdraw(2, {from: testUser1});
 
-            expect(parseInt(await token.balanceOf(testUser1)))
-            .to.equal(parseInt(initialBalance) + 1*(10**18)*(1 + (newRewardRate/100)))
+            expect(parseInt(await token.balanceOf(testUser1))).to.equal(parseInt(initialBalance) + 1*(10**18)*(1 + (newRewardRate/(10**18))))
 
         })
 
         it('should give less reward after updating rate' , async() => {
             // update reward rate
-            newRewardRate = 2;
+            // newRewardRate = 2;
+            newRewardRate = web3.utils.toWei("0.02")
             await pool1.updateRewardRate(newRewardRate, {from: owner});
 
             rewardRate = await pool1.rewardRate();
@@ -203,8 +212,7 @@ contract("LockupStaking", accounts => {
 
             await pool1.withdraw(3, {from: testUser1});
 
-            expect(parseInt(await token.balanceOf(testUser1)))
-            .to.equal(parseInt(initialBalance) + 1*(10**18)*(1 + (newRewardRate/100)))
+            expect(parseInt(await token.balanceOf(testUser1))).to.equal(parseInt(initialBalance) + 1*(10**18)*(1 + (newRewardRate/(10**18))))
         })
     });
 
@@ -212,7 +220,8 @@ contract("LockupStaking", accounts => {
 
         it("create new staking lockup", async () => {
             maxCapacity = web3.utils.toWei('2000');
-            rewardRate = 20;
+            // newRewardRate = 20;
+            newRewardRate = web3.utils.toWei("0.2")
 
             await factory.newStakingPool(
                 60*24*60*60,   // stake duration
@@ -221,19 +230,19 @@ contract("LockupStaking", accounts => {
             )
     
             pool2 = await factory.stakingPools(1);
-            expect(pool2).to.not.equal(0x0000000000000000000000000000000000000000);
+            expect(pool2).to.not.equal(ZERO_ADDRESS);
 
-            pool2 = await StakingWithLockup.at(pool2);
+            pool2 = await LockupStaking.at(pool2);
 
             await token.transfer(testUser2, web3.utils.toWei('100'), { from : owner });
         })
     
         it('fund staking pool', async () => {
-            let totalReward = (rewardRate/100)*maxCapacity;
+            // let totalReward = (rewardRate/100)*maxCapacity;
+            let totalReward = maxCapacity * rewardRate / (10**18);
             await token.transfer(pool2.address, totalReward.toString(), { from : owner });
     
-            expect((await token.balanceOf(pool2.address)).toString())
-            .equal(totalReward.toString());
+            expect((await token.balanceOf(pool2.address)).toString()).equal(totalReward.toString());
         })
 
         it('stake 100 tokens', async () => {
@@ -249,8 +258,7 @@ contract("LockupStaking", accounts => {
             console.log('Gas for staking 2nd time', (await pool2.stake.estimateGas(web3.utils.toWei('50'), {from: testUser2})))
             await pool2.stake(web3.utils.toWei('50'), {from: testUser2});
 
-            expect(parseInt(await token.balanceOf(testUser2)))
-            .to.equal(initialBalance - 100*(10**18))
+            expect(parseInt(await token.balanceOf(testUser2))).to.equal(initialBalance - 100*(10**18))
         })
 
         it('withdraw all stakes', async () => {
@@ -261,7 +269,7 @@ contract("LockupStaking", accounts => {
             console.log('Gas for withdraw all', (await pool2.withdrawAll.estimateGas({from: testUser2})))
             await pool2.withdrawAll({from: testUser2});
 
-            expect(parseInt(await token.balanceOf(testUser2))).to.equal(parseInt(initialBalance) + 100*(10**18)*(rewardRate/100))
+            expect(parseInt(await token.balanceOf(testUser2))).to.equal(parseInt(initialBalance) + 100*(10**18)*(rewardRate/(10**18)))
         })
     });
 })

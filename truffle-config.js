@@ -85,10 +85,10 @@ module.exports = {
   mocha: {
     // timeout: 100000
     reporter: 'eth-gas-reporter',
-    /*reporterOptions: {
+    reporterOptions: {
       currency: "USD",
       coinmarketcap: process.env.CMC_API
-    }*/
+    }
   },
 
   // Configure your compilers

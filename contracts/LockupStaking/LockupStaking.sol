@@ -13,7 +13,7 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
 
     IERC20 public stakingToken;
 
-    uint256 public rewardRate; // percentage of deposit to be rewarded
+    uint256 public rewardRate; // percentage of deposit to be rewarded, 18 decimals
     uint256 public maxCapacity; // max tokens that can be deposited
     uint256 public stakeDuration; // staking duration in sec
     
@@ -39,9 +39,8 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
     function stake(uint _amount) external nonReentrant whenNotPaused {
         // check max capacity
         totalDeposits = totalDeposits.add(_amount);
-        require(totalDeposits < maxCapacity, "Total deposits limit reached");
+        require(totalDeposits < maxCapacity, "Total deposits limit reached, please reduce your deposit amount");
 
-        // stakingToken.transferFrom(msg.sender, address(this), _amount);
         SafeERC20.safeTransferFrom(stakingToken, msg.sender, address(this), _amount);
 
         // add staking details
@@ -58,11 +57,10 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
     function withdraw(uint _counter) external nonReentrant whenNotPaused {
         StakingDetails memory _stake = stakingDetails[msg.sender][_counter];
         // check if lockup period is over for _stake
-        require((int(stakeDuration) - int(block.timestamp.sub(_stake.startTime))) <= 0, "Lockup Period not over");
+        require(block.timestamp.sub(_stake.startTime) >= stakeDuration, "Lockup Period not over");
 
         // if staking period is over -> reward = stakeAmount + stakeAmount*rewardRate/100
-        // stakingToken.transfer(msg.sender, _stake.amount.mul(rewardRate.add(100)).div(100));
-        SafeERC20.safeTransfer(stakingToken, msg.sender, _stake.amount.mul(rewardRate.add(100)).div(100));
+        SafeERC20.safeTransfer(stakingToken, msg.sender, _stake.amount.mul(rewardRate.add(1e18)).div(1e18));
         
         delete stakingDetails[msg.sender][_counter];
 
@@ -77,7 +75,7 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
 
             _stake = stakingDetails[msg.sender][i];
             // check if lockup period is over for _stake
-            require((int(stakeDuration) - int(block.timestamp.sub(_stake.startTime))) <= 0, "Lockup Period not over");
+            require(block.timestamp.sub(_stake.startTime) >= stakeDuration, "Lockup Period not over");
 
             amount = amount.add(_stake.amount);
             
@@ -85,12 +83,11 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
         }
 
         // reward = stakeAmount + stakeAmount*rewardRate/100
-        // stakingToken.transfer(msg.sender, amount.mul(rewardRate.add(100)).div(100));
-        SafeERC20.safeTransfer(stakingToken, msg.sender, amount.mul(rewardRate.add(100)).div(100));
+        SafeERC20.safeTransfer(stakingToken, msg.sender, amount.mul(rewardRate.add(1e18)).div(1e18));
 
         delete stakeCounter[msg.sender];
 
-        emit WithdrawAll(msg.sender, amount.mul(rewardRate.add(100)).div(100));
+        emit WithdrawAll(msg.sender, amount.mul(rewardRate.add(1e18)).div(1e18));
     }
 
 
@@ -115,11 +112,6 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
     function setStakingDetails(address _staker, uint256 _counter, uint256 _newTime, uint256 _newAmount) external override onlyMigrationContractOrOwner {
         stakingDetails[_staker][_counter].startTime = _newTime;
         stakingDetails[_staker][_counter].amount = _newAmount;
-    }
-
-    // function to be called to migrate values from old to new contract
-    function migrateValues(address _oldStkAddress, uint256 _amountToTrasfer) external onlyMigrationContractOrOwner {
-        SafeERC20.safeTransferFrom(stakingToken, _oldStkAddress, address(this), _amountToTrasfer);
     }
 
 

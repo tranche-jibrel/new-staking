@@ -27,7 +27,6 @@ contract MigrateStaking is Ownable, IMigrateStaking {
     }
     StakingDetails public stkDet;
 
-
     constructor(address _stakableToken, address _oldStaking) {
         stakableToken = _stakableToken;
         oldStakingAddress = _oldStaking;
@@ -35,7 +34,7 @@ contract MigrateStaking is Ownable, IMigrateStaking {
 
     // durationIndex can be linked to a new staking contract address deployed by the factory 
     // this function can be restricted to onlyOwner or it can be called by users to "migrate" their details...
-    function migrateSingleStakingDetail(address _sender, uint8 _durationIdx, address _newStkAddress) external onlyOwner{
+    function migrateSingleStakingDetail(address _sender, uint8 _durationIdx, address _newStkAddress) external onlyOwner {
         oswl = StakingWithLockup(oldStakingAddress);
         ls = LockupStaking(_newStkAddress);
 
@@ -45,7 +44,7 @@ contract MigrateStaking is Ownable, IMigrateStaking {
                 (stkDet.startTime, stkDet.amount, stkDet.endTime, stkDet.reward, stkDet.durationIndex) = oswl.stakingDetails(_sender, i);
                 // new details can be inserted directly inside the new staking contract!!
                 if (stkDet.durationIndex == _durationIdx){
-                    uint256 tempCounter = (ls.stakeCounter(_sender)).add(1);
+                    uint256 tempCounter = (ls.stakeCounter(_sender));
                     ls.setStakingCounter(_sender, tempCounter);
                     ls.setStakingDetails(_sender, tempCounter, stkDet.startTime, stkDet.amount);
 

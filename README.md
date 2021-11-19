@@ -36,9 +36,9 @@ Solidity Coverage (no ganache required):
 
 ### Test Coverage
 
-Tests on LockupStaking is at 78.79%.
+Tests on LockupFactory are at 100%, on LockupStaking is at 96.88%.
 
-Tests on LPStaking is at 96%.
+Tests on LPFactory are at 100%, LPStaking are at 96%.
 
 [(Back to top)](#slice-staking)
 
@@ -65,12 +65,12 @@ Tests on LPStaking is at 96%.
         </tr>
         <tr>
             <td>LockupFactory</td>
-            <td><code>5.89</code></td>
+            <td><code>5.80</code></td>
             <td>Factory for staking with lockup contracts.</td>
         </tr>
         <tr>
             <td>LockupStaking</td>
-            <td><code>4.48</code></td>
+            <td><code>4.39</code></td>
             <td>Contract for single staking with lockup</td>
         </tr>
         <tr>
@@ -80,7 +80,7 @@ Tests on LPStaking is at 96%.
         </tr>
         <tr>
             <td>MigrateStaking</td>
-            <td><code>1.83</code></td>
+            <td><code>1.78</code></td>
             <td>Contract to migrate old staking with lockup to new same type contract</td>
         </tr>
     </tbody>

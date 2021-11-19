@@ -4,7 +4,8 @@ const LPStaking = artifacts.require('LPStaking');
 const Token = artifacts.require('Token');
 const LPToken = artifacts.require('LPToken');
 
-const { time, expectRevert } = require("@openzeppelin/test-helpers");
+const { time, expectRevert, constants } = require("@openzeppelin/test-helpers");
+const { ZERO_ADDRESS } = constants;
 const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const { parse } = require("dotenv");
 
@@ -29,13 +30,13 @@ contract("LPStaking", accounts => {
         let balance = await token.balanceOf(owner);
 
         expect(balance.toString()).to.equal(
-            web3.utils.toWei('20000000'));
+            web3.utils.toWei('19990000'));
     })
     
     it('new lp staking pool - 1', async () => {
         await factory.newStakingPool(lp_token.address, 100);
         pool1 = await LPStaking.at(await factory.stakingPools(0));
-        expect(pool1.address).to.not.equal(0x0000000000000000000000000000000000000000);
+        expect(pool1.address).to.not.equal(ZERO_ADDRESS);
 
         // fund the staking pool
         await token.transfer(pool1.address, web3.utils.toWei('1000000'));

@@ -27,6 +27,8 @@ contract MigrateMilestones is Ownable {
     function migrateSingleMilestone(/*address _sender,*/ address _originalMS, address _newLPAddress) external onlyOwner{
         osms = StakingMilestones(_originalMS);
         nlps = LPStaking(_newLPAddress);
+
+        //balances
     }
 
 }

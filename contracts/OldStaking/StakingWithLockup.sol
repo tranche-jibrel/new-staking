@@ -106,6 +106,7 @@ contract StakingWithLockup is Ownable, ERC20NonTransferrable {
     function stake(uint256 amount, uint8 durationIndex) external {
         require(amount > 0, "StakingWithLockup: Cannot stake 0 tokens");
         require(durationIndex < numDurations, "StakingWithLockup: Please enter valid staking duration index");
+        require(!isRepealed[durationIndex], "StakingWithLockup: This duration has been repealed!");
         require(totalRewardsDistributedForDuration[durationIndex] < rewardCapForDuration[durationIndex],
                 "StakingWithLockup: Rewards allocated for this duration have been distributed");
 
