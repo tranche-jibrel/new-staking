@@ -88,7 +88,7 @@ contract("MigrateStaking", accounts => {
         })
     });
 
-    describe("stake()", function () {
+    describe("stake in old staking with lockup contract", function () {
         it("Should stake for user1 in index 0", async function () {
             await sliceContract.approve(stkLckpContract.address, toWei("1000"), { from: testUser1 });
        

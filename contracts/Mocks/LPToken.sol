@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract LPToken is ERC20 {
-    constructor() ERC20("Test Token", "TEST"){}
+    constructor() ERC20("Test LP Token", "LPT"){}
 
     function mint(address account, uint amount) external {
         _mint(account, amount);

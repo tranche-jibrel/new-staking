@@ -75,7 +75,7 @@ Tests on LPFactory are at 100%, LPStaking are at 96%.
         </tr>
         <tr>
             <td>MigrateMilestones</td>
-            <td><code>0.82</code></td>
+            <td><code>1.22</code></td>
             <td>Contract to migrate old milestones to new staking LP token contract</td>
         </tr>
         <tr>

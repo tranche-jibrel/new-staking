@@ -1,12 +1,16 @@
 require('dotenv').config();
+const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 
 const LockupFactory = artifacts.require('LockupFactory');
 const LPFactory = artifacts.require('LPFactory');
 const Token = artifacts.require('Token');
-// const LPToken = artifacts.require('LPToken');
+
 const StakingWithLockup = artifacts.require('StakingWithLockup');
 const MigrateStaking = artifacts.require('MigrateStaking');
 const Vault = artifacts.require('Vault');
+
+const StakingMilestones = artifacts.require('StakingMilestones');
+const MigrateMilestones = artifacts.require('MigrateMilestones');
 
 const totalReward = "10000";
 
@@ -37,6 +41,17 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(MigrateStaking, mySliceInstance.address, stakingLockupInstance.address);
     const myMigratingContract = await MigrateStaking.deployed();
     console.log(`Migrating contract deployed: ${myMigratingContract.address}`)
+
+    // Staking Milestones StakingMilestones
+    const block = await web3.eth.getBlock("latest");
+    // console.log(block.number, block.timestamp);
+    await deployer.deploy(StakingMilestones, block.timestamp, 86400);
+    const myStakingMilestonesContract = await StakingMilestones.deployed();
+    console.log(`Staking Milestones contract deployed: ${myStakingMilestonesContract.address}`)
+
+    await deployer.deploy(MigrateMilestones, mySliceInstance.address, myStakingMilestonesContract.address);
+    const myMigrateMilestonesContract = await MigrateStaking.deployed();
+    console.log(`Migrate Milestones contract deployed: ${myMigrateMilestonesContract.address}`)
 
     // Staking Lockup Factory contract
     await deployer.deploy(LockupFactory, mySliceInstance.address);
