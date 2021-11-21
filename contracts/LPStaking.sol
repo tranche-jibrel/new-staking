@@ -54,6 +54,14 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
         return _balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
+    function getBalanceTime() external view returns(uint256) {
+        return rewardsToken.balanceOf(address(this)).div(rewardRate);
+    }
+
+    function getRewardBalance() external view returns(uint256) {
+        return rewardsToken.balanceOf(address(this));
+    }
+
     /* =========== MUTATIVE FUNCTIONS =========== */
 
     function stake(uint256 _amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
@@ -74,13 +82,21 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
         rewardsToken.transfer(msg.sender, reward);
     }
 
-    function exit() external {
+    function exit() external whenNotPaused {
         withdraw(_balances[msg.sender]);
         getReward();
     }
 
     function updateRewardRate(uint256 newRewardRate) external onlyOwner {
         rewardRate = newRewardRate;
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /* ========== MODIFIERS ========== */

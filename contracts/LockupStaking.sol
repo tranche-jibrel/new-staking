@@ -6,7 +6,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./ILockupStaking.sol";
+import "./interfaces/ILockupStaking.sol";
 
 contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
     using SafeMath for uint256;
@@ -122,6 +122,13 @@ contract LockupStaking is Ownable, ReentrancyGuard, Pausable, ILockupStaking {
         SafeERC20.safeTransferFrom(stakingToken, _oldStkAddress, address(this), _amountToTrasfer);
     }
 
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
     // -------- View functions -------- // 
 
