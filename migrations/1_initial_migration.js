@@ -1,4 +1,4 @@
-const LockupFactory = artifacts.require('LockupFactory');
+const StakingFactory = artifacts.require('StakingFactory');
 
 const Token = artifacts.require('Token');
 const LPToken = artifacts.require('LPToken');
@@ -11,8 +11,5 @@ module.exports = async function (deployer) {
   const token = await Token.deployed();
 
   // Staking Lockup Factory contract
-  await deployer.deploy(LockupFactory, token.address);
-
-  // LP Staking factory contract
-  await deployer.deploy(LPFactory, token.address)
+  await deployer.deploy(StakingFactory, token.address);
 };

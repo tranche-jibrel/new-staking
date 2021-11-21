@@ -1,4 +1,4 @@
-const LPFactory = artifacts.require('LPFactory');
+const StakingFactory = artifacts.require('StakingFactory');
 const LPStaking = artifacts.require('LPStaking');
 
 const Token = artifacts.require('Token');
@@ -22,7 +22,7 @@ contract("LPStaking", accounts => {
         token = await Token.deployed();
         lp_token = await LPToken.new();
 
-        factory = await LPFactory.deployed();
+        factory = await StakingFactory.deployed();
     })
 
     it("check token", async () => {
@@ -33,8 +33,8 @@ contract("LPStaking", accounts => {
     })
     
     it('new lp staking pool - 1', async () => {
-        await factory.newStakingPool(lp_token.address, 100);
-        pool1 = await LPStaking.at(await factory.stakingPools(0));
+        await factory.newLPStakingPool(lp_token.address, 100);
+        pool1 = await LPStaking.at(await factory.lpStakingPools(0));
         expect(pool1.address).to.not.equal(0x0000000000000000000000000000000000000000);
 
         // fund the staking pool
@@ -72,7 +72,7 @@ contract("LPStaking", accounts => {
             await pool1.exit({from: testUser1});
 
             expect((await pool1.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser1))).to.be.closeTo(100*1000, 200);
+            expect(parseInt(await token.balanceOf(testUser1))).to.be.closeTo(100*1000, 500);
             expect((await lp_token.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('100'));
 
         })
@@ -104,7 +104,7 @@ contract("LPStaking", accounts => {
             await pool1.getReward({from: testUser2});
 
             expect((await pool1.balanceOf(testUser2)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser2))).to.be.closeTo(80*1000, 200);
+            expect(parseInt(await token.balanceOf(testUser2))).to.be.closeTo(80*1000, 500);
             expect((await lp_token.balanceOf(testUser2)).toString()).to.equal(web3.utils.toWei('80'));
 
         })
@@ -116,7 +116,7 @@ contract("LPStaking", accounts => {
             await pool1.getReward({from: testUser3});
 
             expect((await pool1.balanceOf(testUser3)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser3))).to.be.closeTo(20*1000, 200);
+            expect(parseInt(await token.balanceOf(testUser3))).to.be.closeTo(20*1000, 500);
             expect((await lp_token.balanceOf(testUser3)).toString()).to.equal(web3.utils.toWei('20'));
 
         })

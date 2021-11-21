@@ -1,4 +1,4 @@
-const LockupFactory = artifacts.require('LockupFactory');
+const StakingFactory = artifacts.require('StakingFactory');
 const Token = artifacts.require('Token');
 const StakingWithLockup = artifacts.require('LockupStaking');
 
@@ -17,7 +17,7 @@ contract("LockupStaking", accounts => {
 
     before(async() => {
         token = await Token.deployed();
-        factory = await LockupFactory.deployed();
+        factory = await StakingFactory.deployed();
     })
 
     it("check token", async () => {
@@ -28,13 +28,13 @@ contract("LockupStaking", accounts => {
     })
 
     it("create new staking lockup", async () => {
-        await factory.newStakingPool(
+        await factory.newLockupStakingPool(
             30*24*60*60,   // stake duration
             maxCapacity,   // max tokens
             rewardRate     // reward rate
         )
 
-        pool1 = await factory.stakingPools(0);
+        pool1 = await factory.lockupStakingPools(0);
         expect(pool1).to.not.equal(0x0000000000000000000000000000000000000000);
     })
 
@@ -51,7 +51,7 @@ contract("LockupStaking", accounts => {
         let newRewardRate, newMaxCapacity;
 
         before(async () => {
-            pool1 = await factory.stakingPools(0);
+            pool1 = await factory.lockupStakingPools(0);
             pool1 = await StakingWithLockup.at(pool1);
 
             rewardRate = await pool1.rewardRate();
@@ -214,13 +214,13 @@ contract("LockupStaking", accounts => {
             maxCapacity = web3.utils.toWei('2000');
             rewardRate = 20;
 
-            await factory.newStakingPool(
+            await factory.newLockupStakingPool(
                 60*24*60*60,   // stake duration
                 maxCapacity,   // max tokens
                 rewardRate     // reward rate
             )
     
-            pool2 = await factory.stakingPools(1);
+            pool2 = await factory.lockupStakingPools(1);
             expect(pool2).to.not.equal(0x0000000000000000000000000000000000000000);
 
             pool2 = await StakingWithLockup.at(pool2);

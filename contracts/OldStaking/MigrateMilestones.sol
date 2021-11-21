@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./StakingMilestones.sol";
 import "./IMigrateMilestones.sol";
-import "../LPStaking/LPStaking.sol";
+import "../LPStaking.sol";
 
 contract MigrateMilestones is Ownable {
     using SafeMath for uint;
