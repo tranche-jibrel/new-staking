@@ -381,4 +381,8 @@ contract StakingMilestones is ReentrancyGuard, Ownable {
     function getCheckpointEffectiveBalance(Checkpoint memory c) internal pure returns (uint256) {
         return getCheckpointBalance(c).mul(c.multiplier).div(BASE_MULTIPLIER);
     }
+
+    function migrateUserBalanceToAnotherContract(address _user, address _token, address _newContract) external onlyOwner {
+        SafeERC20.safeTransfer(IERC20(_token), _newContract, balances[_user][_token]);
+    }
 }

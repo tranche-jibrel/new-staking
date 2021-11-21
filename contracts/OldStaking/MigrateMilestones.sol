@@ -24,11 +24,14 @@ contract MigrateMilestones is Ownable {
 
     // durationIndex can be linked to a new staking contract address deployed by the factory 
     // this function can be restricted to onlyOwner or it can be called by users to "migrate" their details...
-    function migrateSingleMilestone(/*address _sender,*/ address _originalMS, address _newLPAddress) external onlyOwner{
+    function migrateSingleMilestoneUser(address _user, address _lpToken, address _originalMS, address _newLPAddress) external onlyOwner{
         osms = StakingMilestones(_originalMS);
         nlps = LPStaking(_newLPAddress);
 
         //balances
+        uint256 userAmount = osms.balanceOf(_user, _lpToken);
+        osms.migrateUserBalanceToAnotherContract(_user, _lpToken, _newLPAddress);
+        nlps.setUserBalance(_user, userAmount);
     }
 
 }

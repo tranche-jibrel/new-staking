@@ -18,6 +18,8 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
 
+    address public migrationContractAddress;
+
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
@@ -28,6 +30,11 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
         stakingToken = IERC20(_stakingToken);
         rewardsToken = IERC20(_rewardsToken);
         rewardRate = _rewardRate;
+    }
+
+    modifier onlyMigrationContractOrOwner() {
+        require(msg.sender == migrationContractAddress || msg.sender == owner(), "Not owner or migration contract");
+        _;
     }
 
     /* =========== VIEW FUNCTIONS =========== */
@@ -55,6 +62,14 @@ contract LPStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     /* =========== MUTATIVE FUNCTIONS =========== */
+    function setMigrationContract(address _contractAddress) external onlyOwner {
+        migrationContractAddress = _contractAddress;
+    }
+
+    function setUserBalance(address _user, uint256 _newBal) external onlyMigrationContractOrOwner {
+        _totalSupply = _totalSupply.add(_newBal);
+        _balances[_user] = _balances[_user].add(_newBal);        
+    }
 
     function stake(uint256 _amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
         _totalSupply = _totalSupply.add(_amount);
