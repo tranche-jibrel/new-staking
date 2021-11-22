@@ -80,6 +80,8 @@ contract("MigrateStaking", accounts => {
     
           const duration = await stkLckpContract.durations(0);
           expect(duration).to.be.bignumber.equal(new BN("10")); // 7 days = 7*24*60*60 seconds = 604800
+
+          await sliceContract.transfer(vaultContract.address, toWei("1000"), { from: owner });
         });
 
         it("Send some Slice to accounts", async function () {

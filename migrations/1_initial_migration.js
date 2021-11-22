@@ -4,10 +4,12 @@ const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const LockupFactory = artifacts.require('LockupFactory');
 const LPFactory = artifacts.require('LPFactory');
 const Token = artifacts.require('Token');
+const LPToken = artifacts.require('LPToken');
 
 const StakingWithLockup = artifacts.require('StakingWithLockup');
 const MigrateStaking = artifacts.require('MigrateStaking');
 const Vault = artifacts.require('Vault');
+const YieldFarm = artifacts.require('YieldFarm');
 
 const StakingMilestones = artifacts.require('StakingMilestones');
 const MigrateMilestones = artifacts.require('MigrateMilestones');
@@ -20,6 +22,10 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(Token, "Slice Token", "SLICE", 20000000, 0);
     const mySliceInstance = await Token.deployed();
     console.log(`Slice Deployed: ${mySliceInstance.address}`);
+
+    await deployer.deploy(LPToken);
+    const myLPTokenInstance = await LPToken.deployed();
+    console.log(`LP token Deployed: ${myLPTokenInstance.address}`);
 
     await deployer.deploy(Vault, mySliceInstance.address);
     const vaultInstance = await Vault.deployed();
@@ -48,6 +54,10 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(StakingMilestones, block.timestamp, 86400);
     const myStakingMilestonesContract = await StakingMilestones.deployed();
     console.log(`Staking Milestones contract deployed: ${myStakingMilestonesContract.address}`)
+
+    await deployer.deploy(YieldFarm, mySliceInstance.address, myStakingMilestonesContract.address, mySliceInstance.address, vaultInstance.address, web3.utils.toWei("1000"))
+    const myYieldFarmContract = await YieldFarm.deployed();
+    console.log(`Yield Farm contract deployed: ${myYieldFarmContract.address}`)
 
     await deployer.deploy(MigrateMilestones, mySliceInstance.address, myStakingMilestonesContract.address);
     const myMigrateMilestonesContract = await MigrateStaking.deployed();
