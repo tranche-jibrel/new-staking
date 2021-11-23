@@ -107,7 +107,7 @@ contract LPStaking is ILPStaking, Ownable, Pausable, ReentrancyGuard {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function notifyRewardAmount(uint256 reward) external onlyOwner updateReward(address(0)) {
-        
+
         rewardsToken.transferFrom(msg.sender, address(this), reward);
 
         if (block.timestamp >= periodFinish) {

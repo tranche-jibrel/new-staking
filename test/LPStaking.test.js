@@ -10,7 +10,7 @@ const { parse } = require("dotenv");
 
 contract("LPStaking", accounts => {
     let token, lp_token, factory;
-    let newRewardRate;
+    let newRewardRate, rewardsDuration;
     let initialBalance, pool1, pool2;
 
     let owner = accounts[0];
@@ -29,16 +29,24 @@ contract("LPStaking", accounts => {
         let balance = await token.balanceOf(owner);
 
         expect(balance.toString()).to.equal(
-            web3.utils.toWei('20000000'));
+            web3.utils.toWei('1000000000'));
     })
     
     it('new lp staking pool - 1', async () => {
-        await factory.newLPStakingPool(lp_token.address, 100);
+        await factory.newLPStakingPool(lp_token.address);
         pool1 = await LPStaking.at(await factory.lpStakingPools(0));
         expect(pool1.address).to.not.equal(0x0000000000000000000000000000000000000000);
+    })
 
-        // fund the staking pool
-        await token.transfer(pool1.address, web3.utils.toWei('1000000'));
+    it('distribute 10000 tokens - reward rate should be 10000*10**18/(rewardDuration)', async () => {
+        await token.approve(pool1.address, web3.utils.toWei('10000'), {from: owner});
+
+        await pool1.notifyRewardAmount(web3.utils.toWei('10000'), {from: owner});
+
+        rewardsDuration = await pool1.rewardsDuration();
+        newRewardRate = web3.utils.toWei('10000')/rewardsDuration;
+
+        expect((await pool1.rewardRate()).toString()).to.equal(newRewardRate.toString());
     })
 
     describe('stake & withdraw', async() => {
@@ -72,7 +80,7 @@ contract("LPStaking", accounts => {
             await pool1.exit({from: testUser1});
 
             expect((await pool1.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser1))).to.be.closeTo(100*1000, 500);
+            expect(parseInt(await token.balanceOf(testUser1))).to.be.closeTo(newRewardRate*1000, newRewardRate*10);
             expect((await lp_token.balanceOf(testUser1)).toString()).to.equal(web3.utils.toWei('100'));
 
         })
@@ -104,7 +112,7 @@ contract("LPStaking", accounts => {
             await pool1.getReward({from: testUser2});
 
             expect((await pool1.balanceOf(testUser2)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser2))).to.be.closeTo(80*1000, 500);
+            expect(parseInt(await token.balanceOf(testUser2))).to.be.closeTo(0.8*newRewardRate*1000, newRewardRate*10);
             expect((await lp_token.balanceOf(testUser2)).toString()).to.equal(web3.utils.toWei('80'));
 
         })
@@ -116,7 +124,7 @@ contract("LPStaking", accounts => {
             await pool1.getReward({from: testUser3});
 
             expect((await pool1.balanceOf(testUser3)).toString()).to.equal(web3.utils.toWei('0'));
-            expect(parseInt(await token.balanceOf(testUser3))).to.be.closeTo(20*1000, 500);
+            expect(parseInt(await token.balanceOf(testUser3))).to.be.closeTo(0.2*newRewardRate*1000, newRewardRate*10);
             expect((await lp_token.balanceOf(testUser3)).toString()).to.equal(web3.utils.toWei('20'));
 
         })
@@ -125,15 +133,21 @@ contract("LPStaking", accounts => {
     describe('updating reward rate', async() => {
 
         it('users [!owner] should not be able to update reward rate', async() => {
-            newRewardRate = 200;
-            expectRevert(pool1.updateRewardRate(newRewardRate, {from: testUser1}), "Ownable: caller is not the owner");
+
+            await token.approve(pool1.address, web3.utils.toWei('200'), {from: testUser1});
+
+            expectRevert(pool1.notifyRewardAmount(web3.utils.toWei('200'), {from: testUser1}), "Ownable: caller is not the owner");
         })
         
         it('owner should be able to update reward rate', async () => {
-            newRewardRate = 200;
-            await pool1.updateRewardRate(newRewardRate, {from: owner});
+            await token.approve(pool1.address, web3.utils.toWei('200'), {from: owner});
 
-            expect(parseInt(await pool1.rewardRate())).to.equal(200);
-        })        
+            await pool1.notifyRewardAmount(web3.utils.toWei('200'), {from: owner});
+
+            rewardsDuration = await pool1.rewardsDuration();
+            newRewardRate = web3.utils.toWei('10200')/rewardsDuration;
+
+            expect(parseInt(await pool1.rewardRate())).to.be.closeTo(parseInt(newRewardRate), newRewardRate*10);
+        })
     })
 })

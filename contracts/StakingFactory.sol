@@ -27,8 +27,8 @@ contract StakingFactory is Ownable {
         lockupStakingPools.push(address(pool));
     }
 
-    function newLPStakingPool(address _stakingToken, uint _rewardRate) onlyOwner external {
-        LPStaking pool = new LPStaking(_stakingToken, rewardToken, _rewardRate);
+    function newLPStakingPool(address _stakingToken) onlyOwner external {
+        LPStaking pool = new LPStaking(rewardToken, _stakingToken);
         pool.transferOwnership(owner());
         
         lpStakingPools.push(address(pool));

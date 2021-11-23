@@ -1,4 +1,4 @@
-const LPFactory = artifacts.require('LPFactory');
+// const LPFactory = artifacts.require('LPFactory');
 const LPStaking = artifacts.require('LPStaking');
 
 const StakingMilestones = artifacts.require('StakingMilestones');

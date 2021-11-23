@@ -5,9 +5,9 @@ interface ILPStaking {
     
     /* ========== EVENTS ========== */
     event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
+    event Staked(address user, uint256 amount);
+    event Withdrawn(address user, uint256 amount);
+    event RewardPaid(address user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
 
@@ -20,11 +20,11 @@ interface ILPStaking {
 
     function lastTimeRewardApplicable() external view returns (uint256);
 
-    function rewardPerToken() external view returns (uint256);
+    // function rewardPerToken() external view returns (uint256);
 
-    function rewardsDistribution() external view returns (address);
+    // function rewardsDistribution() external view returns (address);
 
-    function rewardsToken() external view returns (address);
+    // function rewardsToken() external view returns (address);
 
     function totalSupply() external view returns (uint256);
 
